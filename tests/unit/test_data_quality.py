@@ -284,6 +284,24 @@ class TestQualityValidator:
         assert quality_class == QualityValidator.SUSPICIOUS
         assert len(warnings) > 0
 
+    def test_custom_z_threshold_is_applied_to_outlier_rule(self, valid_aq_record):
+        """Test QualityValidator threads a configured z_threshold through to
+        AQOutlierValidation instead of always using the hardcoded default.
+        """
+        # pm25 base bound is 500.0 at the default threshold of 6.0, so a
+        # value of 400 is well within bounds at the default sensitivity.
+        valid_aq_record["value"] = 400.0
+
+        default_validator = QualityValidator()
+        _, default_warnings = default_validator.validate_air_quality(valid_aq_record)
+        assert not any("outlier" in w.lower() for w in default_warnings)
+
+        # Tightening the threshold should lower the effective bound and flag
+        # the same value as an outlier.
+        strict_validator = QualityValidator(z_threshold=2.0)
+        _, strict_warnings = strict_validator.validate_air_quality(valid_aq_record)
+        assert any("outlier" in w.lower() for w in strict_warnings)
+
     def test_valid_weather_record_classified_valid(self, valid_weather_record):
         """Test valid weather record classified as VALID."""
         validator = QualityValidator()
