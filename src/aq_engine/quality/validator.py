@@ -32,14 +32,22 @@ class QualityValidator:
     SUSPICIOUS = "SUSPICIOUS"
     INVALID = "INVALID"
 
-    def __init__(self):
-        """Initialize validator with all rules."""
+    def __init__(self, z_threshold: float = 6.0):
+        """Initialize validator with all rules.
+
+        Args:
+            z_threshold: Outlier sensitivity passed to ``AQOutlierValidation``.
+                Previously this was hardcoded to 6.0 regardless of what was
+                configured (e.g. via ``Config.quality.outlier_z_threshold``),
+                so changing the config had no effect. Callers should pass the
+                configured value through explicitly.
+        """
         # Air quality rules
         self.aq_rules = [
             AQStructuralValidation(),
             AQSemanticValidation(),
             AQTemporalValidation(future_tolerance_hours=1.0),
-            AQOutlierValidation(z_threshold=6.0),
+            AQOutlierValidation(z_threshold=z_threshold),
             AQStaleValidation(flatline_threshold=3),
         ]
 
